@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>My recorrido magico digital</title>
+    <style media="screen">
+      *{margin: 0; padding: 0;}
+      canvas{position: absolute; top: 0; left: 0; z-index: 0;}
+      #contenedor{position: absolute; top:25px; left:25px; z-index: 1; color: white;}
+      #contenedor a{color: white; font-weight: bold;}
+    </style>
+    <script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.114/build/three.module.js';
+
+import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.114/examples/jsm/controls/OrbitControls.js';
+import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.114/examples/jsm/loaders/GLTFLoader.js';
+import { RGBELoader } from 'https://cdn.jsdelivr.net/npm/three@0.114/examples/jsm/loaders/RGBELoader.js';
+
+var container, controls;
+//incrementar el numero de camaras
+//incrementar el numero de clips
+var camera,camera2,camera3,camera4,camera5, scene, renderer, mixer, clock, clip2, clip3;
+
+init();
+animate();
+
+function init() {
+
+  container = document.createElement( 'div' );
+  document.body.appendChild( container );
+
+  camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.25, 20 );
+  camera.position.set( - 2.8, 0.6, 3.7 );
+
+  scene = new THREE.Scene();
+  clock = new THREE.Clock();
+
+  //venice_sunset_1k.hdr
+  //spot1Lux.hdr
+  //royal_esplanade_1k.hdr
+  //quarry_01_1k.hdr
+  //pedestrian_overpass_1k.hdr
+
+  new RGBELoader()
+    .setDataType( THREE.UnsignedByteType )
+    .setPath( 'https://threejs.org/examples/textures/equirectangular/' )
+    .load( 'venice_sunset_1k.hdr', function ( texture ) {
+
+      var envMap = pmremGenerator.fromEquirectangular( texture ).texture;
+
+      //scene.background = envMap;
+      scene.environment = envMap;
+
+      texture.dispose();
+      pmremGenerator.dispose();
+
+      // model
+
+
+      var loader = new GLTFLoader();
+      loader.load( 'test3.glb', function ( gltf ) {
+
+
+        scene.add( gltf.scene );
+        gltf.animations; // Array<THREE.AnimationClip>
+		    gltf.scene; // THREE.Group
+		    gltf.scenes; // Array<THREE.Group>
+		    gltf.cameras; // Array<THREE.Camera>
+		    gltf.asset; // Object
+
+        mixer = new THREE.AnimationMixer( gltf.scene );
+        camera = gltf.cameras[0];
+        camera3 = camera;
+
+        //seleccionar la segunda camara - definir segunda camara
+        camera2 = gltf.cameras[1];
+        camera4 = camera2;
+
+        camera5 = gltf.cameras[2];
+
+
+
+        //get camera animations
+        console.log(gltf.animations);
+        console.log(gltf.cameras);
+
+        gltf.animations.forEach( ( clip ) => {
+          //definir el segundo clip o clip2 - clip3 etc
+            clip2 = clip
+            mixer.clipAction( clip ).play();
+
+        } );
+
+      } );
+
+    } );
+
+  renderer = new THREE.WebGLRenderer( { antialias: true } );
+  renderer.setPixelRatio( window.devicePixelRatio );
+  renderer.setSize( window.innerWidth, window.innerHeight );
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 0.8;
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  container.appendChild( renderer.domElement );
+
+  var pmremGenerator = new THREE.PMREMGenerator( renderer );
+  pmremGenerator.compileEquirectangularShader();
+
+  controls = new OrbitControls( camera, renderer.domElement );
+  controls.minDistance = 2;
+  controls.maxDistance = 10
+  controls.target.set( 0, 0, - 0.2 );
+  controls.update();
+
+  window.addEventListener( 'resize', onWindowResize, false );
+
+}
+
+
+// la funcion donde cambiamos de camara y cambiamos de clip
+document.getElementById("change1").onclick = function() {camera = camera3;   mixer.clipAction( clip2 ).reset()};
+document.getElementById("change2").onclick = function() {camera = camera2;   mixer.clipAction( clip2 ).reset()};
+document.getElementById("change3").onclick = function() {camera = camera5;   mixer.clipAction( clip2 ).reset()};
+
+
+function onWindowResize() {
+
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+
+  renderer.setSize( window.innerWidth, window.innerHeight );
+
+}
+
+//
+
+function animate() {
+
+  requestAnimationFrame( animate );
+
+  var delta = clock.getDelta();
+
+  if ( mixer ) mixer.update( delta );
+
+  renderer.render( scene, camera );
+
+}
+
+
+</script>
+  </head>
+  <body>
+    <div id="contenedor">
+      <h2>RECORRIDO WOW</h2>
+      <a id="change1" href="#" >Cambiar a camara 1</a>
+      <a id="change2" href="#" >Cambiar a camara 2</a>
+        <a id="change3" href="#" >Cambiar a camara 3</a>
+      <p>Derechos de autor reservados etc...</p>
+    </div>
+
+  </body>
+</html>
